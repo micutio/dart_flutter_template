@@ -1,0 +1,8 @@
+include: package:lints/recommended.yaml
+
+linter:
+  rules:
+    - directives_ordering
+    - prefer_final_locals
+    - unnecessary_final: false
+    - prefer_final_fields

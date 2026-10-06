@@ -1,0 +1,15 @@
+name: todo
+description: Monorepo workspace for todo task management across core library, CLI, and Flutter Android app.
+version: 0.1.0
+publish_to: none
+
+environment:
+  sdk: ^3.13.4
+
+workspace:
+  - packages/core
+  - packages/cli
+  - packages/app
+
+dev_dependencies:
+  lints: ^6.0.0

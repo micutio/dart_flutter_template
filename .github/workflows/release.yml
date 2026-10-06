@@ -1,0 +1,289 @@
+# Builds native CLI archives and Android APK, then publishes them to a GitHub Release.
+
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*.*.*"
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Existing tag to release, including the leading v
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    name: Verify
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    outputs:
+      tag: ${{ steps.version.outputs.tag }}
+      version: ${{ steps.version.outputs.version }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          ref: ${{ github.event_name == 'workflow_dispatch' && inputs.tag || github.ref }}
+
+      - name: Check tag, pubspec version, and changelog
+        id: version
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            tag="${{ inputs.tag }}"
+          else
+            tag="${{ github.ref_name }}"
+          fi
+          if ! [[ "$tag" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "::error::Tag '$tag' must look like v1.2.3."
+            exit 1
+          fi
+          version="${tag#v}"
+          pubspec_version="$(awk '/^version:/{print $2; exit}' pubspec.yaml | tr -d '\r')"
+          if [ "$pubspec_version" != "$version" ]; then
+            echo "::error::Tag $tag does not match pubspec version '$pubspec_version'."
+            exit 1
+          fi
+          if ! grep -q "^## ${version}[[:space:]]*$" CHANGELOG.md; then
+            echo "::error::CHANGELOG.md has no heading '## ${version}'."
+            exit 1
+          fi
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+
+  test:
+    name: Test
+    needs: verify
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          ref: ${{ github.event_name == 'workflow_dispatch' && inputs.tag || github.ref }}
+
+      - uses: subosito/flutter-action@f2c4f66bb15b2571a24d5b94f06861ad322957a7 # v2.18.0
+        with:
+          channel: stable
+          cache: true
+
+      - name: Cache pub dependencies
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+        with:
+          path: ${{ runner.os == 'Windows' && '~/AppData/Local/Pub/Cache' || '~/.pub-cache' }}
+          key: pub-${{ runner.os }}-${{ hashFiles('pubspec.lock') }}
+          restore-keys: pub-${{ runner.os }}-
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Run Core & CLI tests
+        run: |
+          dart test packages/core
+          dart test packages/cli
+
+      - name: Run Flutter App tests
+        run: flutter test packages/app
+
+  build-cli:
+    name: Build CLI
+    needs: [verify, test]
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            target: linux_x64
+            archive_os: linux-x64
+          - os: macos-latest
+            target: macos_arm64
+            archive_os: macos-arm64
+          - os: windows-latest
+            target: windows_x64
+            archive_os: windows-x64
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          ref: ${{ github.event_name == 'workflow_dispatch' && inputs.tag || github.ref }}
+
+      - uses: subosito/flutter-action@f2c4f66bb15b2571a24d5b94f06861ad322957a7 # v2.18.0
+        with:
+          channel: stable
+          cache: true
+
+      - name: Cache pub dependencies
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+        with:
+          path: ${{ runner.os == 'Windows' && '~/AppData/Local/Pub/Cache' || '~/.pub-cache' }}
+          key: pub-${{ runner.os }}-${{ hashFiles('pubspec.lock') }}
+          restore-keys: pub-${{ runner.os }}-
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Build CLI bundle
+        shell: bash
+        run: |
+          cd packages/cli
+          dart build cli
+
+      - name: Smoke test CLI bundle
+        shell: bash
+        run: |
+          cd packages/cli
+          dart run tool/smoke_cli.dart
+
+      - name: Package tar.gz
+        if: runner.os != 'Windows'
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p dist
+          archive="dist/todo-${{ needs.verify.outputs.version }}-${{ matrix.archive_os }}.tar.gz"
+          tar -czf "$archive" -C "packages/cli/build/cli/${{ matrix.target }}/bundle" .
+
+      - name: Package zip
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $dest = "dist/todo-${{ needs.verify.outputs.version }}-${{ matrix.archive_os }}.zip"
+          New-Item -ItemType Directory -Force -Path dist | Out-Null
+          Compress-Archive -Path "packages/cli/build/cli/${{ matrix.target }}/bundle/*" -DestinationPath $dest
+
+      - name: Upload archive
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: release-${{ matrix.archive_os }}
+          path: dist/*
+          retention-days: 1
+          if-no-files-found: error
+
+  build-android:
+    name: Build Android
+    needs: [verify, test]
+    timeout-minutes: 20
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          ref: ${{ github.event_name == 'workflow_dispatch' && inputs.tag || github.ref }}
+
+      - uses: actions/setup-java@862e3223030d4a79c9484b80a4e320d36181b5fb # v4.7.0
+        with:
+          distribution: "temurin"
+          java-version: "17"
+
+      - uses: subosito/flutter-action@f2c4f66bb15b2571a24d5b94f06861ad322957a7 # v2.18.0
+        with:
+          channel: stable
+          cache: true
+
+      - name: Cache pub dependencies
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+        with:
+          path: ~/.pub-cache
+          key: pub-${{ runner.os }}-${{ hashFiles('pubspec.lock') }}
+          restore-keys: pub-${{ runner.os }}-
+
+      - name: Cache Gradle
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: gradle-${{ runner.os }}-${{ hashFiles('packages/app/android/gradle/wrapper/gradle-wrapper.properties') }}
+          restore-keys: gradle-${{ runner.os }}-
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Build Android APK
+        shell: bash
+        run: |
+          cd packages/app
+          flutter build apk --release --no-codesign
+
+      - name: Copy APK to dist
+        shell: bash
+        run: |
+          mkdir -p dist
+          cp packages/app/build/app/outputs/flutter-apk/app-release-unsigned.apk "dist/todo-app-${{ needs.verify.outputs.version }}.apk"
+
+      - name: Upload Android artifact
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: release-android-apk
+          path: dist/*.apk
+          retention-days: 1
+          if-no-files-found: error
+
+  publish:
+    name: Publish
+    needs: [verify, build-cli, build-android]
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          ref: ${{ github.event_name == 'workflow_dispatch' && inputs.tag || github.ref }}
+
+      - name: Download archives
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          pattern: release-*
+          path: dist
+          merge-multiple: true
+
+      - name: Write SHA256SUMS
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd dist
+          sha256sum *.tar.gz *.zip *.apk > SHA256SUMS
+          cat SHA256SUMS
+
+      - name: Read release notes
+        id: notes
+        shell: bash
+        env:
+          VERSION: ${{ needs.verify.outputs.version }}
+        run: |
+          set -euo pipefail
+          notes="$(awk -v ver="$VERSION" '
+            $0 ~ "^## " ver "[[:space:]]*$" { capture = 1; next }
+            capture && /^## / { exit }
+            capture { sub(/\r$/, ""); print }
+          ' CHANGELOG.md)"
+          {
+            echo "body<<RELEASE_NOTES_END"
+            printf '%s\n' "$notes"
+            echo "RELEASE_NOTES_END"
+          } >> "$GITHUB_OUTPUT"
+
+      # The first publishes stay drafts so the archives can be checked
+      # before the release is public. Set draft to false once that is trusted.
+      - name: Publish GitHub Release
+        uses: softprops/action-gh-release@3bb12739c298aeb8a4eeaf626c5b8d85266b0e65 # v2.6.2
+        with:
+          tag_name: ${{ needs.verify.outputs.tag }}
+          name: ${{ needs.verify.outputs.tag }}
+          body: ${{ steps.notes.outputs.body }}
+          draft: true
+          files: |
+            dist/*.tar.gz
+            dist/*.zip
+            dist/*.apk
+            dist/SHA256SUMS
+          fail_on_unmatched_files: true

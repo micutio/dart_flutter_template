@@ -1,0 +1,24 @@
+name: todo_app
+description: Flutter Android frontend for todo task management.
+publish_to: none
+
+version: 0.1.0+1
+
+environment:
+  sdk: ^3.13.4
+
+resolution: workspace
+
+dependencies:
+  cupertino_icons: ^1.0.8
+  flutter:
+    sdk: flutter
+  todo_core:
+
+dev_dependencies:
+  flutter_lints: ^6.0.0
+  flutter_test:
+    sdk: flutter
+
+flutter:
+  uses-material-design: true
