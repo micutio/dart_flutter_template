@@ -217,7 +217,7 @@ jobs:
         shell: bash
         run: |
           mkdir -p dist
-          cp packages/app/build/app/outputs/flutter-apk/app-release-unsigned.apk "dist/todo-app-${{ needs.verify.outputs.version }}.apk"
+          cp packages/app/build/app/outputs/flutter-apk/*.apk "dist/todo-app-${{ needs.verify.outputs.version }}.apk"
 
       - name: Upload Android artifact
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
