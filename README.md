@@ -11,6 +11,8 @@ todo/
 ├── pubspec.yaml                 # Root workspace manifest
 ├── analysis_options.yaml        # Monorepo static analysis rules
 ├── CHANGELOG.md                 # Project version history
+├── tool/
+│   └── dev.dart                 # Cross-platform developer task runner
 ├── packages/
 │   ├── core/                    # Core Dart library (todo_core)
 │   │   ├── lib/
@@ -37,6 +39,38 @@ todo/
 - **`todo_core` (`packages/core`)**: Pure Dart domain package holding task models, priority queues, and Eisenhower matrix logic. Has no Flutter dependency, enabling reuse across CLI, server, and client frontends.
 - **`todo_cli` (`packages/cli`)**: Native command-line interface for fast task capture and viewing from the terminal. Compiles to native AOT binaries across Linux, macOS, and Windows.
 - **`todo_app` (`packages/app`)**: Flutter Android application providing a rich Material 3 user interface on top of `todo_core`.
+
+---
+
+## Development Tasks Runner (`tool/dev.dart`)
+
+To avoid OS differences with `make`, a cross-platform Dart runner script is available at `tool/dev.dart`:
+
+```bash
+# Show all available commands
+dart run tool/dev.dart help
+
+# Formatting & static analysis
+dart run tool/dev.dart format           # Format all packages
+dart run tool/dev.dart format --check   # Check formatting without modifying
+dart run tool/dev.dart analyze          # Analyze with --fatal-infos
+dart run tool/dev.dart fix              # Apply automated fixes
+dart run tool/dev.dart fix --check      # Dry-run check for fixes
+
+# Testing
+dart run tool/dev.dart test             # Run all tests (core, cli, app)
+dart run tool/dev.dart test:core        # Run core tests only
+dart run tool/dev.dart test:cli         # Run CLI tests only
+dart run tool/dev.dart test:app         # Run Flutter app tests only
+
+# Building & Smoke Testing
+dart run tool/dev.dart build:cli        # Compile native CLI bundle
+dart run tool/dev.dart smoke:cli        # Smoke test compiled CLI binary
+dart run tool/dev.dart build:app        # Build Android debug APK
+
+# Full Local CI Verification Suite (format, analyze, fix, test, build, smoke)
+dart run tool/dev.dart verify
+```
 
 ---
 
