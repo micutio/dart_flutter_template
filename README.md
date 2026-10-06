@@ -145,3 +145,125 @@ The GitHub Actions workflows mirror the established pattern from `cards_with_dar
   - Builds Android release APK.
   - Generates `SHA256SUMS` and publishes draft GitHub Release with release notes.
 - **Dependabot (`.github/dependabot.yml`)**: Weekly dependency update checks for Pub packages and GitHub Actions.
+
+---
+
+## Using This Repository as a Template
+
+This repository is ready to be marked as a **GitHub Template Repository** (`Settings` -> check `Template repository`, or `gh repo edit --template`). When generating a new project from this template, follow this customization checklist:
+
+### 1. Rename Project & Packages
+- **Root**: Update `name:` and `description:` in root `pubspec.yaml`.
+- **`packages/core`**:
+  - Update `name:` in `packages/core/pubspec.yaml` (e.g., `myproject_core`).
+  - Rename `lib/todo_core.dart` to `lib/<new_name>.dart`.
+- **`packages/cli`**:
+  - Update `name:` in `packages/cli/pubspec.yaml` (e.g., `myproject_cli`).
+  - Update `executables:` map (e.g., `mytool: mytool`).
+  - Rename `bin/todo.dart` to `bin/mytool.dart` and `lib/todo_cli.dart` to `lib/mytool_cli.dart`.
+  - Update the dependency from `todo_core` to your new core package name.
+  - In `tool/smoke_cli.dart`, update the binary name filter (`'todo'` -> `'mytool'`) and expected stdout checks.
+- **`packages/app`**:
+  - Update `name:` in `packages/app/pubspec.yaml`.
+  - Update dependency from `todo_core` to your new core package name.
+  - Update import directives across `lib/` and `test/`.
+
+### 2. Configure Android Application ID & Namespace
+In `packages/app/android/app/build.gradle.kts`:
+- Change `namespace` and `applicationId` from `com.example.todo_app` to your reverse-domain identifier (e.g. `com.mycompany.myproject`).
+- Update `packages/app/android/app/src/main/kotlin/.../MainActivity.kt` directory and package statement to match.
+- Replace launcher icons under `packages/app/android/app/src/main/res/mipmap-*`.
+
+### 3. Update CI/CD & Build Scripts
+- **Workflows (`.github/workflows/dart.yml`, `release.yml`, `dart-beta.yml`)**:
+  - Update artifact names and archive prefixes (e.g. `todo-` -> `myproject-`).
+  - Update test paths if you change workspace folder names.
+- **Task Runner (`tool/dev.dart`)**:
+  - Update any command strings or paths if package directories or binary names change.
+- **Changelog**: Reset `CHANGELOG.md` to `## 0.1.0` or `## 1.0.0` for your new project.
+
+### 4. Re-resolve and Verify
+```bash
+flutter pub get
+dart run tool/dev.dart verify
+```
+
+---
+
+## Optional: Publishing Packages to pub.dev
+
+By default, all workspace packages are set to `publish_to: none` to prevent accidental public release of private code or name collisions.
+
+If you want to publish `todo_core` as an open-source library and `todo_cli` as a globally activatable command-line tool, follow these steps:
+
+### 1. Requirements for pub.dev
+1. **Remove `publish_to: none`**:
+   Remove this line from `packages/core/pubspec.yaml` and `packages/cli/pubspec.yaml`. (Keep it in root `pubspec.yaml` and `packages/app/pubspec.yaml`).
+2. **Ensure Globally Unique Names**:
+   Check [pub.dev](https://pub.dev) to ensure your package names are available.
+3. **Add Pana Metadata**:
+   Each published package must have:
+   ```yaml
+   description: >-
+     A concise description between 60 and 180 characters explaining what the package does.
+   repository: https://github.com/<user>/<repo>
+   issue_tracker: https://github.com/<user>/<repo>/issues
+   topics:
+     - cli
+     - productivity
+   ```
+4. **Specify Explicit Dependency Versions**:
+   Within a pub workspace, local packages can depend on sibling packages without version numbers. However, **pub.dev requires explicit versions**:
+   ```yaml
+   # In packages/cli/pubspec.yaml:
+   dependencies:
+     myproject_core: ^0.1.0 # Must match the published version of core
+   ```
+5. **Package-Level Files**:
+   Pub.dev archives each package independently. Ensure each published package has its own:
+   - `LICENSE`
+   - `README.md` (documenting the package's API or CLI usage)
+   - `CHANGELOG.md` (documenting versions for that package)
+
+### 2. Validation & Publishing Sequence
+Because `cli` depends on `core`, **`core` must be published first**:
+
+```bash
+# 1. Validate both packages with dry-run
+cd packages/core && dart pub publish --dry-run
+cd ../cli && dart pub publish --dry-run
+
+# 2. Publish core
+cd ../core && dart pub publish
+
+# 3. Publish cli (after core is live on pub.dev)
+cd ../cli && dart pub publish
+```
+
+Once published, end users can install your CLI globally:
+```bash
+dart pub global activate <cli_package_name>
+<executable_name> --help
+```
+
+### 3. Automated Publishing via GitHub Actions (Trusted Publishing)
+pub.dev supports **Trusted Publishing** using GitHub Actions OIDC (no stored tokens or secrets required):
+1. In pub.dev package settings, configure GitHub Actions as the publisher (specifying repository and workflow).
+2. Add a publishing job to `.github/workflows/release.yml`:
+   ```yaml
+   publish-pub-dev:
+     name: Publish to pub.dev
+     needs: [verify, test]
+     runs-on: ubuntu-latest
+     permissions:
+       id-token: write # Required for pub.dev OIDC authentication
+     steps:
+       - uses: actions/checkout@v4
+       - uses: dart-lang/setup-dart@v1
+       - name: Publish Core
+         run: dart pub publish --force
+         working-directory: packages/core
+       - name: Publish CLI
+         run: dart pub publish --force
+         working-directory: packages/cli
+   ```
