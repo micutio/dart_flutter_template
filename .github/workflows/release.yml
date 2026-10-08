@@ -70,10 +70,9 @@ jobs:
         with:
           ref: ${{ github.event_name == 'workflow_dispatch' && inputs.tag || github.ref }}
 
-      - uses: subosito/flutter-action@f2c4f66bb15b2571a24d5b94f06861ad322957a7 # v2.18.0
+      - uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2.23.0
         with:
           channel: stable
-          cache: true
 
       - name: Cache pub dependencies
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
@@ -116,10 +115,9 @@ jobs:
         with:
           ref: ${{ github.event_name == 'workflow_dispatch' && inputs.tag || github.ref }}
 
-      - uses: subosito/flutter-action@f2c4f66bb15b2571a24d5b94f06861ad322957a7 # v2.18.0
+      - uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2.23.0
         with:
           channel: stable
-          cache: true
 
       - name: Cache pub dependencies
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
@@ -178,15 +176,14 @@ jobs:
         with:
           ref: ${{ github.event_name == 'workflow_dispatch' && inputs.tag || github.ref }}
 
-      - uses: actions/setup-java@862e3223030d4a79c9484b80a4e320d36181b5fb # v4.7.0
+      - uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6 # v6.0.1
         with:
           distribution: "temurin"
           java-version: "17"
 
-      - uses: subosito/flutter-action@f2c4f66bb15b2571a24d5b94f06861ad322957a7 # v2.18.0
+      - uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2.23.0
         with:
           channel: stable
-          cache: true
 
       - name: Cache pub dependencies
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
