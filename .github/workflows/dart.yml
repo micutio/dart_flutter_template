@@ -141,7 +141,7 @@ jobs:
         run: |
           dart test --coverage=packages/core/coverage packages/core
           dart run coverage:format_coverage --lcov --in=packages/core/coverage --out=packages/core/coverage/lcov.info --report-on=packages/core/lib --base-directory=.
-          flutter test --coverage packages/app
+          flutter test --coverage --coverage-path=packages/app/coverage/lcov.info packages/app
 
       - name: Upload Core coverage
         if: runner.os == 'Linux'
