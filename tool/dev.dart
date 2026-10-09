@@ -19,40 +19,39 @@ Future<void> main(List<String> args) async {
 }
 
 void _printHelp() {
-  stdout.writeln('Todo Monorepo Task Runner');
-  stdout.writeln();
-  stdout.writeln('Usage: dart run tool/dev.dart <command> [options]');
-  stdout.writeln('   or: dart tool/dev.dart <command> [options]');
-  stdout.writeln();
-  stdout.writeln('Commands:');
-  stdout.writeln(
-    '  format, fmt [--check]     Format code (or check formatting with --check)',
-  );
-  stdout.writeln(
-    '  analyze, lint             Run static analysis across all workspaces',
-  );
-  stdout.writeln(
-    '  fix [--check]             Apply automated fixes (or dry-run with --check)',
-  );
-  stdout.writeln(
-    '  test                      Run all tests (core, cli, and app)',
-  );
-  stdout.writeln('  test:core, test-core      Run core package unit tests');
-  stdout.writeln('  test:cli, test-cli        Run CLI package unit tests');
-  stdout.writeln('  test:app, test-app        Run Flutter app widget tests');
-  stdout.writeln(
-    '  build:cli, build-cli      Build the native CLI executable bundle',
-  );
-  stdout.writeln(
-    '  smoke:cli, smoke-cli      Run smoke test on the compiled CLI binary',
-  );
-  stdout.writeln(
-    '  build:app, build-app      Build the debug Android APK for packages/app',
-  );
-  stdout.writeln(
-    '  verify, check, ci         Run full CI validation suite locally',
-  );
-  stdout.writeln('  help                      Show this help message');
+  stdout
+    ..writeln('Todo Monorepo Task Runner')
+    ..writeln()
+    ..writeln('Usage: dart run tool/dev.dart <command> [options]')
+    ..writeln('   or: dart tool/dev.dart <command> [options]')
+    ..writeln()
+    ..writeln('Commands:')
+    ..writeln(
+      '  format, fmt [--check]     Format code (or check formatting with --check)',
+    )
+    ..writeln(
+      '  analyze, lint             Run static analysis across all workspaces',
+    )
+    ..writeln(
+      '  fix [--check]             Apply automated fixes (or dry-run with --check)',
+    )
+    ..writeln('  test                      Run all tests (core, cli, and app)')
+    ..writeln('  test:core, test-core      Run core package unit tests')
+    ..writeln('  test:cli, test-cli        Run CLI package unit tests')
+    ..writeln('  test:app, test-app        Run Flutter app widget tests')
+    ..writeln(
+      '  build:cli, build-cli      Build the native CLI executable bundle',
+    )
+    ..writeln(
+      '  smoke:cli, smoke-cli      Run smoke test on the compiled CLI binary',
+    )
+    ..writeln(
+      '  build:app, build-app      Build the debug Android APK for packages/app',
+    )
+    ..writeln(
+      '  verify, check, ci         Run full CI validation suite locally',
+    )
+    ..writeln('  help                      Show this help message');
 }
 
 Future<int> _runCommand(String command, List<String> rest) async {
@@ -186,9 +185,9 @@ Future<int> _buildApp() async {
 }
 
 Future<int> _verify() async {
-  stdout.writeln('=== Running Monorepo Verification Suite ===');
-
-  stdout.writeln('\n[1/6] Format check...');
+  stdout
+    ..writeln('=== Running Monorepo Verification Suite ===')
+    ..writeln('\n[1/6] Format check...');
   final fmt = await _format(isCheck: true);
   if (fmt != 0) {
     stderr.writeln('Format check failed!');
