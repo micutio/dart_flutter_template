@@ -22,7 +22,7 @@ class TodoApp extends StatelessWidget {
 }
 
 class TodoHomePage extends StatefulWidget {
-  const TodoHomePage({super.key, required this.title});
+  const TodoHomePage({required this.title, super.key});
 
   final String title;
 
@@ -46,24 +46,13 @@ class _TodoHomePageState extends State<TodoHomePage> {
           isUrgent: true,
           isImportant: true,
         ),
-        TodoItem(
-          id: '2',
-          title: 'Design DDD architecture',
-          isUrgent: false,
-          isImportant: true,
-        ),
+        TodoItem(id: '2', title: 'Design DDD architecture', isImportant: true),
         TodoItem(
           id: '3',
           title: 'Reply to routine notifications',
           isUrgent: true,
-          isImportant: false,
         ),
-        TodoItem(
-          id: '4',
-          title: 'Archive old notes',
-          isUrgent: false,
-          isImportant: false,
-        ),
+        TodoItem(id: '4', title: 'Archive old notes'),
       ],
     );
   }

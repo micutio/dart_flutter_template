@@ -44,23 +44,23 @@ class TodoList {
   /// 2. Eisenhower quadrant (Q1, Q2, Q3, Q4).
   /// 3. Earliest due date first (if due dates exist).
   List<TodoItem> prioritizedItems() {
-    final sorted = List<TodoItem>.from(_items);
-    sorted.sort((a, b) {
-      if (a.isCompleted != b.isCompleted) {
-        return a.isCompleted ? 1 : -1;
-      }
-      final quadComp = a.quadrant.index.compareTo(b.quadrant.index);
-      if (quadComp != 0) return quadComp;
+    final sorted = List<TodoItem>.from(_items)
+      ..sort((a, b) {
+        if (a.isCompleted != b.isCompleted) {
+          return a.isCompleted ? 1 : -1;
+        }
+        final quadComp = a.quadrant.index.compareTo(b.quadrant.index);
+        if (quadComp != 0) return quadComp;
 
-      if (a.dueDate != null && b.dueDate != null) {
-        return a.dueDate!.compareTo(b.dueDate!);
-      } else if (a.dueDate != null) {
-        return -1;
-      } else if (b.dueDate != null) {
-        return 1;
-      }
-      return a.createdAt.compareTo(b.createdAt);
-    });
+        if (a.dueDate != null && b.dueDate != null) {
+          return a.dueDate!.compareTo(b.dueDate!);
+        } else if (a.dueDate != null) {
+          return -1;
+        } else if (b.dueDate != null) {
+          return 1;
+        }
+        return a.createdAt.compareTo(b.createdAt);
+      });
     return List<TodoItem>.unmodifiable(sorted);
   }
 }

@@ -1,13 +1,50 @@
 include: package:flutter_lints/flutter.yaml
 
 analyzer:
+  language:
+    strict-casts: true
+    strict-inference: true
+    strict-raw-types: true
+
+  errors:
+    missing_required_param: error
+    missing_return: error
+    use_build_context_synchronously: error
+    todo: ignore
+
   exclude:
     - build/**
     - android/**
+    - "**/*.g.dart"
 
 linter:
   rules:
-    - directives_ordering
+    # --- Flutter UI & Performance ---
+    - use_colored_box
+    - use_decorated_box
+    - sized_box_shrink_expand
+    - prefer_null_aware_method_calls
+    - always_put_required_named_parameters_first
+
+    # --- Async & Lifecycle Safety ---
+    - cancel_subscriptions
+    - close_sinks
+    - unawaited_futures
+    # NOTE: `discarded_futures` flags any future returned where void is expected.
+    # In Flutter (e.g. onPressed: () => someAsyncMethod()), this can produce substantial noise.
+    # This rule may be disabled or ignored if it causes too much friction with UI event handlers.
+    - discarded_futures
+
+    # --- Immutability & Modern Dart ---
     - prefer_final_locals
-    - unnecessary_final: false
     - prefer_final_fields
+    - unnecessary_final: false
+
+    # --- Code Hygiene & Structure ---
+    - directives_ordering
+    - cascade_invocations
+    - avoid_redundant_argument_values
+    - avoid_escaping_inner_quotes
+    - sort_constructors_first
+    - sort_unnamed_constructors_first
+    - sort_pub_dependencies
