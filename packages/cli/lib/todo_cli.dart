@@ -21,21 +21,21 @@ ArgParser buildParser() {
     );
 }
 
-int runCli(List<String> args, {Stdout? out, Stdout? err}) {
+int runCli(List<String> args, {StringSink? out, StringSink? err}) {
   final stdoutSink = out ?? stdout;
+  final stderrSink = err ?? stderr;
   final parser = buildParser();
 
   try {
     final results = parser.parse(args);
 
     if (results.flag('help')) {
-      stdoutSink.writeln(
-        'Todo CLI - Task management driven by Eisenhower priorities',
-      );
-      stdoutSink.writeln();
-      stdoutSink.writeln('Usage: todo [options]');
-      stdoutSink.writeln();
-      stdoutSink.writeln(parser.usage);
+      stdoutSink
+        ..writeln('Todo CLI - Task management driven by Eisenhower priorities')
+        ..writeln()
+        ..writeln('Usage: todo [options]')
+        ..writeln()
+        ..writeln(parser.usage);
       return 0;
     }
 
@@ -57,15 +57,9 @@ int runCli(List<String> args, {Stdout? out, Stdout? err}) {
         TodoItem(
           id: '2',
           title: 'Plan architecture using DDD',
-          isUrgent: false,
           isImportant: true,
         ),
-        TodoItem(
-          id: '3',
-          title: 'Organize workspace cleanups',
-          isUrgent: false,
-          isImportant: false,
-        ),
+        TodoItem(id: '3', title: 'Organize workspace cleanups'),
       ],
     );
 
@@ -78,9 +72,10 @@ int runCli(List<String> args, {Stdout? out, Stdout? err}) {
 
     return 0;
   } on FormatException catch (e) {
-    (err ?? stderr).writeln(e.message);
-    (err ?? stderr).writeln();
-    (err ?? stderr).writeln(parser.usage);
+    stderrSink
+      ..writeln(e.message)
+      ..writeln()
+      ..writeln(parser.usage);
     return 64;
   }
 }

@@ -12,28 +12,13 @@ void main() {
       );
       expect(q1.quadrant, equals(EisenhowerQuadrant.urgentAndImportant));
 
-      final q2 = TodoItem(
-        id: '2',
-        title: 'Task 2',
-        isUrgent: false,
-        isImportant: true,
-      );
+      final q2 = TodoItem(id: '2', title: 'Task 2', isImportant: true);
       expect(q2.quadrant, equals(EisenhowerQuadrant.notUrgentAndImportant));
 
-      final q3 = TodoItem(
-        id: '3',
-        title: 'Task 3',
-        isUrgent: true,
-        isImportant: false,
-      );
+      final q3 = TodoItem(id: '3', title: 'Task 3', isUrgent: true);
       expect(q3.quadrant, equals(EisenhowerQuadrant.urgentAndNotImportant));
 
-      final q4 = TodoItem(
-        id: '4',
-        title: 'Task 4',
-        isUrgent: false,
-        isImportant: false,
-      );
+      final q4 = TodoItem(id: '4', title: 'Task 4');
       expect(q4.quadrant, equals(EisenhowerQuadrant.notUrgentAndNotImportant));
     });
   });
@@ -72,12 +57,7 @@ void main() {
         isImportant: true,
         isCompleted: true,
       );
-      final q2Task = TodoItem(
-        id: '2',
-        title: 'Q2 task',
-        isUrgent: false,
-        isImportant: true,
-      );
+      final q2Task = TodoItem(id: '2', title: 'Q2 task', isImportant: true);
       final q1Sooner = TodoItem(
         id: '3',
         title: 'Q1 sooner',
