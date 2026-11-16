@@ -152,7 +152,7 @@ Future<int> _testCli() async {
 }
 
 Future<int> _testApp() async {
-  return _exec('flutter', ['test', 'packages/app']);
+  return _exec('flutter', ['test'], workingDirectory: 'packages/app');
 }
 
 Future<int> _testAll() async {

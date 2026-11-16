@@ -90,7 +90,9 @@ jobs:
           dart test packages/cli
 
       - name: Run Flutter App tests
-        run: flutter test packages/app
+        run: |
+          cd packages/app
+          flutter test
 
   build-cli:
     name: Build CLI
